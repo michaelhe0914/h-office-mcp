@@ -1,0 +1,27 @@
+{
+  "name": "h-office-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for King-An Publishing h-office sales statistics",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "h-office-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "login": "node dist/login.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "cheerio": "^1.0.0",
+    "exceljs": "^4.4.0",
+    "puppeteer": "^24.0.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

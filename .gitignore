@@ -1,0 +1,24 @@
+# ── 相依套件 ──
+node_modules/
+
+# ── 機密：登入憑證（含真實 session id，絕不上傳）──
+cookies.json
+
+# ── 內部營業資料：查詢回傳與快取 ──
+sales.json
+query_results_*.json
+query_summary_*.json
+query_markdown_*.md
+
+# ── 產出的 Excel 報表（含業務員姓名與銷售數字）──
+Input/
+Output/
+Output2/
+*.xlsx
+~$*.xlsx
+
+# ── 一般 ──
+*.log
+.DS_Store
+.env
+.env.*
