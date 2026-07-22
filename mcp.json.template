@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "h-office": {
+      "command": "node",
+      "args": [
+        "FULL_PATH_TO_H_OFFICE_MCP/dist/index.js"
+      ],
+      "env": {
+        "H_OFFICE_EMAIL": "your_email@gmail.com",
+        "H_OFFICE_PASSWORD": "your_password"
+      }
+    }
+  }
+}

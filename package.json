@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "login": "node dist/login.js"
+    "login": "node dist/login.js",
+    "setup": "tsc && node dist/setup.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

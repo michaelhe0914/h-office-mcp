@@ -22,3 +22,4 @@ Output2/
 .DS_Store
 .env
 .env.*
+!.env.example

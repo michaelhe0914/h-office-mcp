@@ -2,6 +2,8 @@
  * HTTP client for h-office system.
  * Handles self-signed SSL certificates and cookie-based authentication.
  */
+/** Load .env file into process.env */
+export declare function loadEnv(): void;
 /** Load cookies from disk */
 export declare function loadCookies(): boolean;
 /** Save cookies to disk */

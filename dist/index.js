@@ -10,8 +10,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { request, loadCookies, hasSession, saveCookies, getCookiesFilePath, } from "./client.js";
+import { request, loadCookies, hasSession, saveCookies, getCookiesFilePath, loadEnv, } from "./client.js";
 import { parseSalesPage, parseProductClasses, formatSalesResults, checkLoginStatus, } from "./parser.js";
+import { loginWithPuppeteer } from "./login.js";
+// Load .env configuration on startup
+loadEnv();
 // ─── Configuration ─────────────────────────────────────────────────
 const BASE_URL = process.env.H_OFFICE_BASE_URL || "https://h-office.king-an.com.tw:8082";
 // Suppress Node.js TLS self-signed cert warnings
@@ -23,6 +26,7 @@ const server = new McpServer({
 });
 // ─── Helper: ensure login ──────────────────────────────────────────
 async function ensureLoggedIn() {
+    loadEnv();
     if (!hasSession()) {
         // Try loading cookies from file
         loadCookies();
@@ -40,20 +44,27 @@ async function ensureLoggedIn() {
             }
         }
     }
+    // Attempt auto-login if credentials are configured but no valid session
+    if (!hasSession() && process.env.H_OFFICE_EMAIL && process.env.H_OFFICE_PASSWORD) {
+        console.error("🔄 Attempting automatic login with configured environment credentials...");
+        try {
+            const success = await loginWithPuppeteer();
+            if (success) {
+                loadCookies();
+            }
+        }
+        catch (e) {
+            console.error("Auto-login error:", e);
+        }
+    }
     if (!hasSession()) {
         return {
             ok: false,
-            message: `尚未登入。請先執行登入程序：\n\n` +
-                `方法一（自動）：\n` +
-                `  設定環境變數後執行登入腳本：\n` +
-                `  set H_OFFICE_EMAIL=your@email.com\n` +
-                `  set H_OFFICE_PASSWORD=your_password\n` +
-                `  node dist/login.js\n\n` +
-                `方法二（手動）：\n` +
-                `  1. 在瀏覽器中打開 ${BASE_URL}/login 並登入\n` +
-                `  2. 打開 DevTools (F12) → Application → Cookies\n` +
-                `  3. 複製 beaker.session.id 的值\n` +
-                `  4. 設定環境變數 H_OFFICE_COOKIE=beaker.session.id=xxx\n\n` +
+            message: `尚未登入。請先在專案根目錄的 .env 檔案中設定您的帳號密碼：\n\n` +
+                `  H_OFFICE_EMAIL=your_email@gmail.com\n` +
+                `  H_OFFICE_PASSWORD=your_password\n\n` +
+                `或直接執行登入指令：\n` +
+                `  npm run login\n\n` +
                 `Cookies 檔案路徑：${getCookiesFilePath()}`,
         };
     }
@@ -62,9 +73,22 @@ async function ensureLoggedIn() {
         const res = await request(BASE_URL, "/");
         const status = checkLoginStatus(res.body);
         if (!status.loggedIn) {
+            // If session expired and credentials present, retry auto-login
+            if (process.env.H_OFFICE_EMAIL && process.env.H_OFFICE_PASSWORD) {
+                console.error("🔄 Session expired. Re-attempting Puppeteer login...");
+                const relogged = await loginWithPuppeteer();
+                if (relogged) {
+                    loadCookies();
+                    const retryRes = await request(BASE_URL, "/");
+                    const retryStatus = checkLoginStatus(retryRes.body);
+                    if (retryStatus.loggedIn) {
+                        return { ok: true, message: `已登入：${retryStatus.username || "OK"}` };
+                    }
+                }
+            }
             return {
                 ok: false,
-                message: "Session 已過期。請重新執行登入程序。\n" +
+                message: "Session 已過期。請重新設定 `.env` 密碼或執行 `npm run login`。\n" +
                     `Cookies 檔案路徑：${getCookiesFilePath()}`,
             };
         }

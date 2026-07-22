@@ -16,6 +16,7 @@ async function run() {
   const targetClasses = [
     "國中講義:複習講義(不含5-6)",
     "國中講義:新思維(不含5-6)",
+    "國中講義:新思維5-6"
   ];
 
   // Check login

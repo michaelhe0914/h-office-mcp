@@ -9,4 +9,6 @@
  * 3. Automate Google OAuth sign-in
  * 4. Capture and save the session cookie
  */
-export {};
+export declare function loginWithPuppeteer(customEmail?: string, customPassword?: string, options?: {
+    headless?: boolean;
+}): Promise<boolean>;
