@@ -208,6 +208,128 @@ server.tool("query_sales", "查詢金安出版社的出書統計表。支援按�
         };
     }
 });
+// ─── Tool: query_sales_json ────────────────────────────────────────
+server.tool("query_sales_json", "查詢金安出版社出書統計表並回傳結構化 JSON 資料。支援日期區間、產品類別、區域、業務員、經銷商與產品名稱篩選，並附帶各維度統計彙總。", {
+    begin_date: z
+        .string()
+        .describe("開始日期，格式 YYYY-M-D，例如 2025-3-25"),
+    end_date: z
+        .string()
+        .describe("結束日期，格式 YYYY-M-D，例如 2025-5-30"),
+    product_class: z
+        .string()
+        .optional()
+        .describe("產品類別（可選）。可透過 list_product_classes 查看。"),
+    zone: z
+        .string()
+        .optional()
+        .describe("篩選區域（可選，如：北區、中區、南區）"),
+    sales_rep: z
+        .string()
+        .optional()
+        .describe("篩選業務人員（可選，如：何光傑、李敏豪、蔡榮訓等）"),
+    customer: z
+        .string()
+        .optional()
+        .describe("篩選經銷商 / 書局名稱（可選）"),
+    product: z
+        .string()
+        .optional()
+        .describe("篩選產品名稱關鍵字（可選）"),
+}, async ({ begin_date, end_date, product_class, zone, sales_rep, customer, product }) => {
+    const auth = await ensureLoggedIn();
+    if (!auth.ok) {
+        return {
+            content: [{ type: "text", text: auth.message }],
+            isError: true,
+        };
+    }
+    try {
+        const params = {
+            begin: begin_date,
+            end: end_date,
+        };
+        if (product_class) {
+            params.product_class = product_class;
+        }
+        const res = await request(BASE_URL, "/sales", { params });
+        const result = parseSalesPage(res.body);
+        let filtered = result.records;
+        if (zone) {
+            filtered = filtered.filter((r) => r.zone.includes(zone));
+        }
+        if (sales_rep) {
+            filtered = filtered.filter((r) => r.sales.includes(sales_rep));
+        }
+        if (customer) {
+            filtered = filtered.filter((r) => r.customer.includes(customer));
+        }
+        if (product) {
+            filtered = filtered.filter((r) => r.product.includes(product));
+        }
+        const totalQty = filtered.reduce((sum, r) => sum + r.qty, 0);
+        const totalRtnQty = filtered.reduce((sum, r) => sum + r.rtn_qty, 0);
+        const netQty = totalQty - totalRtnQty;
+        // Aggregations
+        const byZone = {};
+        const bySalesRep = {};
+        const byProduct = {};
+        for (const r of filtered) {
+            // zone
+            if (!byZone[r.zone])
+                byZone[r.zone] = { qty: 0, rtn_qty: 0, net_qty: 0 };
+            byZone[r.zone].qty += r.qty;
+            byZone[r.zone].rtn_qty += r.rtn_qty;
+            byZone[r.zone].net_qty += r.qty - r.rtn_qty;
+            // sales
+            if (!bySalesRep[r.sales])
+                bySalesRep[r.sales] = { qty: 0, rtn_qty: 0, net_qty: 0 };
+            bySalesRep[r.sales].qty += r.qty;
+            bySalesRep[r.sales].rtn_qty += r.rtn_qty;
+            bySalesRep[r.sales].net_qty += r.qty - r.rtn_qty;
+            // product
+            if (!byProduct[r.product])
+                byProduct[r.product] = { qty: 0, rtn_qty: 0, net_qty: 0 };
+            byProduct[r.product].qty += r.qty;
+            byProduct[r.product].rtn_qty += r.rtn_qty;
+            byProduct[r.product].net_qty += r.qty - r.rtn_qty;
+        }
+        const outputData = {
+            period: `${begin_date} ~ ${end_date}`,
+            productClass: product_class || "全部",
+            filters: { zone, sales_rep, customer, product },
+            summary: {
+                totalQty,
+                totalRtnQty,
+                netQty,
+                recordCount: filtered.length,
+            },
+            byZone,
+            bySalesRep,
+            byProduct,
+            records: filtered,
+        };
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(outputData, null, 2),
+                },
+            ],
+        };
+    }
+    catch (err) {
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: `查詢失敗：${err instanceof Error ? err.message : String(err)}`,
+                },
+            ],
+            isError: true,
+        };
+    }
+});
 // ─── Tool: query_sales_raw ─────────────────────────────────────────
 server.tool("query_sales_raw", "查詢出書統計表並回傳原始 HTML（用於偵錯或分析頁面結構）。", {
     begin_date: z.string().describe("開始日期，格式 YYYY-M-D"),

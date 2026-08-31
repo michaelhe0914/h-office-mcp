@@ -104,7 +104,8 @@
 | :--- | :--- | :--- |
 | `check_login` | 檢查目前的 Session 是否有效及登入帳號。 | 無 |
 | `list_product_classes` | 列出系統內所有可查詢的產品分類項目。 | 無 |
-| `query_sales` | 查詢特定區間與類別之銷售統計表。 | `begin_date` (`YYYY-M-D`), `end_date` (`YYYY-M-D`), `product_class` (選填) |
+| `query_sales` | 查詢特定區間與類別之銷售統計表（格式化文字摘要）。 | `begin_date` (`YYYY-M-D`), `end_date` (`YYYY-M-D`), `product_class` (選填) |
+| `query_sales_json` | 查詢銷售數據並回傳結構化 JSON，支援區域、業務員、經銷商與品名多重篩選及各維度加總。 | `begin_date`, `end_date`, `product_class`, `zone`, `sales_rep`, `customer`, `product` |
 | `query_sales_raw` | 回傳原始 HTML 頁面（用於排錯除錯）。 | `begin_date`, `end_date`, `product_class` |
 
 ---

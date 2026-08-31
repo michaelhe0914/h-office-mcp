@@ -20,6 +20,7 @@
   - `check_login` — 檢查 beaker session 是否有效與登入身分
   - `list_product_classes` — 列出可查詢的產品類別
   - `query_sales` — 依日期區間與產品類別回傳格式化統計表
+  - `query_sales_json` — 依日期區間、區域、業務員等回傳結構化 JSON 與統計數據
   - `query_sales_raw` — 回傳原始 HTML 供偵錯
 - **報表腳本**：`query_*.js` 抓資料、`generate_*.js` 產生各區與各業務員的 Excel 統計表、`verify_*.js` 驗證結果。
 
